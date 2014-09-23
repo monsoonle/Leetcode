@@ -1,0 +1,120 @@
+基本思想是这样的：这些熊孩子的等级排列可以切成很多段，每一段中满足这三种可能性中的一种：递增、递减、相等
+
+举个例子
+1 2 3 4 5 5 5 8 7 6 5 6 7 8
+其中1 2 3 4 5是递增段， 5 5 5是相等段，8 7 6 5是递减段，5 6 7 8又是递增段
+（相邻段之间有重叠一个熊孩子的可能）
+
+分析糖果的分配要求后（每个人一定要比他等级低的邻居拿到更多），我们会发现，只需要记录下以下信息就可以达到给最少的糖果：
+1、本段起始点的信息（index, rating）
+2、本段状态（上升中、下降中、相等）
+
+pass的过程中，要有一个变量记录前一个熊孩子的等级，以便及时做状态切换和记录新的起始点
+
+然后我们来看看三种不同的状态：
+
+无所谓
+
+等级的负值不影响分配糖果
+
+那我就举个有负值的例子
+
+1 1 1 -5 -4 -3 -2
+
+比如我们现在pass到了-2这个数
+
+不会
+
+三种不同的状态：
+
+1、上升段（比如3 5 7 9）熊孩子给的糖数应该是1 2 3 4...如此递增，我们只要知道上升段的开始点index，每次拿到一个数，如果还继续在上升，那就result += i - index + 1; 就可以了
+
+2、平等段，如果某个熊孩子跟前面的家伙相等（rating[i] == rating[i-1]），那就直接给他一个就好了……
+
+3、下降段，这个比较tricky，首先，我们的目标是给整个下降段的孩子按递减去排列，直到下降段结束的熊孩子只拿到一个糖果
+
+但由于在one pass的过程中，所以还不知道后面下降段有多长，但只要记住了起始点，以及起始点当前分配的糖果数，就可以实时增加糖果
+
+比如我们开始有ratings: 1 5 9 8 6 5
+在1 5 9的时候，分配的糖果分别是1 2 3（沿途记录当前分配candy数）
+这时候来了个8，变成了下降段，分配糖变成1 2 3 1
+来个6，继续下降，分配糖变成1 2 3 2 1 (所做的只是result += i - inflectIndex)，起始只是从开始点后面那个孩子开始，沿途多给一个，直接下标相减就可以了
+
+其实只是从开始点后面那个孩子开始，沿途多给一个，直接下标相减就可以了
+
+再来个5，此时会发现，如果用1 2 3 3 2 1就违反规则了，原因在于
+当前坐标 － 起始点坐标 + 1 > 起始点糖果数 （因为要一路递减，在起始点那个熊孩子一定要拿到最多，所以至少是 当前坐标－起始点坐标＋1）
+此时，我们从开始点那个孩子开始，沿途多给一个，所以直接＋＝下标相减＋1就可以了，并更新起始点孩子的糖果数（inflectValue++）
+
+总体思想就是：每来一个熊孩子，能给多“少”给多“少”，然后实时调整前面熊孩子的糖果分配，而这种调整只需要做些加法计算，状态记录也只需要记下前面某一个熊孩子就够了，所以可以one pass和O(1) memory
+
+
+
+差不多就是这样了……贴个代码吧……
+
+public int candy(int[] ratings) {
+        int len = ratings.length;
+        if (ratings == null || len == 0)
+            return 0;
+            
+        int inflect = -1;       // inflection point (-1: equal state)
+        int inflectCandy = 0;   // candy given at inflection point (0: equal state)
+        
+        int pre = ratings[0];   // previous rating of child
+        int state = 0;  // 1: ascending; -1: descending; 0: equal
+        
+        int ret = 1;
+        for (int i = 1; i < len; i++) {
+            int r = ratings[i];
+            if (r > pre) {
+                switch (state) {
+                    case 1:
+                        inflectCandy = i - inflect + 1;
+                        ret += inflectCandy;
+                        break;
+                    case -1:
+                    case 0:
+                        inflect = i-1;
+                        inflectCandy = 2;
+                        ret += 2;
+                        break;
+                }
+                
+                state = 1;
+            }
+            else if (r == pre) {
+                ret += 1;
+                state = 0;
+            }
+            else {
+                switch (state) {
+                    case 1:
+                        inflect = i-1;
+                        ret += 1;
+                        break;
+                    case 0:
+                        inflect = i-1;
+                        inflectCandy = 2;
+                        ret += 2;
+                        break;
+                    case -1:
+                        if (i-inflect+1 > inflectCandy) {
+                            inflectCandy = i-inflect+1;
+                            ret += inflectCandy;
+                        }
+                        else
+                            ret += i-inflect;
+                        break;
+                }
+                
+                state = -1;
+            }
+            
+            pre = r;
+        }
+        
+        return ret;
+    }
+
+
+

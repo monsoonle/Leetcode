@@ -16,8 +16,8 @@ package com.ll.Frequency_5;
 public class Merge_Sorted_Array {
 
 	public void merge(int A[], int m, int B[], int n) {
+		
 		for (int i = m + n - 1; i >= 0 && m > 0 && n > 0; i--) {
-			
 			//  end -> start
 			if (A[m - 1] > B[n - 1]) {
 				A[i] = A[m - 1];

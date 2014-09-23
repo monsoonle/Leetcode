@@ -1,16 +1,2 @@
-	Two Sum
-	String to Integer (atoi)
-	3Sum
-	Valid Parentheses
-	Merge Two Sorted Lists
-	Implement strStr()
-	Pow(x, n)
-	Merge Intervals
-	Insert Interval
-	Valid Number
-	Climbing Stairs
-	Set Matrix Zeroes
-	Merge Sorted Array
-	Validate Binary Search Tree
-	Valid Palindrome
+
 	Word Ladder
